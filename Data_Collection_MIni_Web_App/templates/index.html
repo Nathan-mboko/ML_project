@@ -1,0 +1,66 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drawing App</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let isDrawing = false;
+        let points = [];
+
+        $(document).ready(function() {
+            let canvas = document.getElementById('canvas');
+            let context = canvas.getContext('2d');
+
+            canvas.addEventListener('mousedown', function(event) {
+                isDrawing = true;
+                points.push({x: event.offsetX, y: event.offsetY});
+            });
+
+            canvas.addEventListener('mousemove', function(event) {
+                if (isDrawing) {
+                    points.push({x: event.offsetX, y: event.offsetY});
+                    draw();
+                }
+            });
+
+            canvas.addEventListener('mouseup', function() {
+                isDrawing = false;
+            });
+
+            function draw() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.strokeStyle = 'black';
+                context.lineWidth = 2;
+                for (let i = 0; i < points.length - 1; i++) {
+                    context.beginPath();
+                    context.moveTo(points[i].x, points[i].y);
+                    context.lineTo(points[i + 1].x, points[i + 1].y);
+                    context.stroke();
+                    context.closePath();
+                }
+            }
+
+            $('#save-btn').click(function() {
+                let drawingData = points.map(function(point) {
+                    return `${point.x},${point.y}`;
+                }).join(';');
+
+                $.post('/draw', {drawing: drawingData}, function(response) {
+                    let image = new Image();
+                    image.src = 'data:image/png;base64,' + response;
+                    $('#result').html(image);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Drawing App</h1>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <button id="save-btn">Save Image</button>
+    <div id="result"></div>
+</body>
+</html>
